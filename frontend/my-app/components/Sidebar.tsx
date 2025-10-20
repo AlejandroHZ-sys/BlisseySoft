@@ -9,6 +9,7 @@ import {
   CalendarDays,
   BarChart3,
   GraduationCap,
+  Stethoscope,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -19,15 +20,18 @@ export default function Sidebar() {
     { name: "Personal de Enfermería", path: "/personal", icon: Users },
     { name: "Gestión de Turnos", path: "/turnos", icon: CalendarDays },
     { name: "Asignación de Turnos", path: "/asignaciones", icon: ClipboardList },
+  { name: "Gestión de Pacientes", path: "/pacientes", icon: Stethoscope },
     { name: "Reportes", path: "/reportes", icon: BarChart3 },
     { name: "Capacitación", path: "/capacitacion", icon: GraduationCap },
   ];
+
+  
 
   return (
     <aside className="w-64 h-screen bg-gradient-to-b from-cyan-700 to-blue-600 text-white flex flex-col shadow-xl">
       <div className="flex items-center gap-3 px-6 py-6 mb-2">
         <img
-          src="/logo-nursia.png"
+          src="/logo-nursia.jpeg"
           alt="NURSIA"
           className="h-9 w-9 rounded-full bg-white p-1 shadow"
         />
