@@ -1,78 +1,61 @@
 "use client";
 
 import LayoutDashboard from "@/components/LayoutDashboard";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PatientSearchBar from "./components/PatientSearchBar";
 import PatientTable from "./components/PatientTable";
-import type { Patient } from "./components/PatientTable";
 import PatientForm from "./components/PatientForm";
-
-const MOCK_PATIENTS: Patient[] = [
-  {
-    id: "p1",
-    fullName: "Carlos Ortega",
-    curp: "OECC990212HDF",
-    area: "Urgencias",
-    bed: "U-03",
-    sex: "M",
-    status: "Activo",
-    nurse: "María Fernández",
-  },
-  {
-    id: "p2",
-    fullName: "Ana López",
-    curp: "LOAA010101MDF",
-    area: "UCI",
-    bed: "C-04",
-    sex: "F",
-    status: "Observación",
-    nurse: "Luis García",
-  },
-  {
-    id: "p3",
-    fullName: "Jorge Martínez",
-    curp: "MAJJ980501HDF",
-    area: "Cirugía",
-    bed: "Q-12",
-    sex: "M",
-    status: "Alta",
-    nurse: "—",
-  },
-];
+import { usePacientesStore, type Patient } from "@/lib/patientsStore";
 
 export default function PacientesPage() {
-  const [patients, setPatients] = useState<Patient[]>(MOCK_PATIENTS);
+  const {
+    pacientes,
+    loading,
+    error,
+    fetchPacientes,
+    addPaciente,
+    editPaciente,
+    removePaciente,
+  } = usePacientesStore();
+
   const [selected, setSelected] = useState<Patient | null>(null);
   const [q, setQ] = useState("");
   const [area, setArea] = useState<string>("");
   const [estado, setEstado] = useState<string>("");
 
+  useEffect(() => {
+    fetchPacientes();
+  }, [fetchPacientes]);
+
   const filtered = useMemo(() => {
-    return patients.filter((p) => {
+    return pacientes.filter((p) => {
       const byText =
         q.trim() === "" ||
         p.fullName.toLowerCase().includes(q.toLowerCase()) ||
         p.curp.toLowerCase().includes(q.toLowerCase()) ||
         p.bed.toLowerCase().includes(q.toLowerCase());
-      const byArea = area === "" || area === "Todos" || p.area === area;
-      const byEstado = estado === "" || estado === "Todos" || p.status === estado;
+      const byArea = area === "" || p.area === area;
+      const byEstado = estado === "" || p.status === estado;
       return byText && byArea && byEstado;
     });
-  }, [patients, q, area, estado]);
+  }, [pacientes, q, area, estado]);
 
-  const handleSave = (data: Patient) => {
-    setPatients((prev) => {
-      const exists = prev.some((x) => x.id === data.id);
-      if (exists) {
-        return prev.map((x) => (x.id === data.id ? data : x));
-      }
-      return [{ ...data, id: crypto.randomUUID() }, ...prev];
-    });
+  const handleSave = async (data: Patient) => {
+    if (!data.fullName.trim()) return alert("Nombre requerido");
+    if (!data.area) return alert("Área requerida");
+    if (!data.status) return alert("Estado requerido");
+
+    if (data.id) {
+      await editPaciente(data.id, data);
+    } else {
+      const { id: _omit, ...nuevo } = data;
+      await addPaciente({ ...nuevo, nurse: nuevo.nurse || "—" });
+    }
     setSelected(null);
   };
 
-  const handleDelete = (id: string) => {
-    setPatients((prev) => prev.filter((p) => p.id !== id));
+  const handleDelete = async (id: string | number) => {
+    await removePaciente(id);
     if (selected?.id === id) setSelected(null);
   };
 
@@ -93,10 +76,9 @@ export default function PacientesPage() {
                   curp: "",
                   area: "Urgencias",
                   bed: "",
-                  sex: "",
                   status: "Activo",
                   nurse: "",
-                })
+                } as any)
               }
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
             >
@@ -113,9 +95,12 @@ export default function PacientesPage() {
             onEstado={setEstado}
           />
 
+          {loading && <p className="p-4 text-gray-500">Cargando pacientes...</p>}
+          {error && <p className="p-4 text-red-500">{error}</p>}
+
           <PatientTable
             data={filtered}
-            onSelect={(p: Patient) => setSelected(p)}
+            onSelect={setSelected}
             onDelete={handleDelete}
           />
         </div>
