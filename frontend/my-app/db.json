@@ -1,0 +1,24 @@
+{
+  "pacientes": [
+    {
+      "id": "1",
+      "fullName": "Alejandro",
+      "curp": "OECC990212HDF",
+      "area": "Urgencias",
+      "bed": "U-03",
+      "sex": "M",
+      "status": "Activo",
+      "nurse": "María Fernández"
+    },
+    {
+      "id": "0b3e",
+      "fullName": "Robert",
+      "curp": "adkfjka",
+      "area": "Cirugía",
+      "bed": "u1",
+      "sex": "F",
+      "status": "Activo",
+      "nurse": "—"
+    }
+  ]
+}

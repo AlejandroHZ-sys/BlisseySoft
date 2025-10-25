@@ -3,7 +3,7 @@
 export type PatientStatus = "Activo" | "Observación" | "Alta" | "Traslado";
 
 export type Patient = {
-  id: string;
+  id: string | number;
   fullName: string;
   curp: string;
   area: string;
@@ -20,7 +20,7 @@ export default function PatientTable({
 }: {
   data: Patient[];
   onSelect: (p: Patient) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string | number) => void;
 }) {
   return (
     <div className="overflow-x-auto border rounded-xl">
