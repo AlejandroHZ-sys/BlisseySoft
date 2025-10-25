@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 export type PatientStatus = "Activo" | "Observación" | "Alta" | "Traslado";
 
 export type Patient = {
@@ -22,6 +24,7 @@ export default function PatientTable({
   onSelect: (p: Patient) => void;
   onDelete: (id: string | number) => void;
 }) {
+  const router = useRouter();
   return (
     <div className="overflow-x-auto border rounded-xl">
       <table className="w-full text-sm">
@@ -41,7 +44,8 @@ export default function PatientTable({
           {data.map((p, i) => (
             <tr
               key={p.id || `row-${i}`}
-              className={`border-t hover:bg-blue-50`}
+              className={`border-t hover:bg-blue-50 cursor-pointer`}
+              onClick={() => router.push(`/historial?id=${String(p.id)}`)}
             >
               <td className="p-3">{p.fullName}</td>
               <td className="p-3">{p.curp}</td>
@@ -65,13 +69,19 @@ export default function PatientTable({
               <td className="p-3">
                 <div className="flex gap-2">
                   <button
-                    onClick={() => onSelect(p)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(p);
+                    }}
                     className="px-2 py-1 text-xs rounded bg-blue-100 hover:bg-blue-200"
                   >
                     Editar
                   </button>
                   <button
-                    onClick={() => onDelete(p.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(p.id);
+                    }}
                     className="px-2 py-1 text-xs rounded bg-red-100 hover:bg-red-200"
                   >
                     Borrar
@@ -82,7 +92,7 @@ export default function PatientTable({
           ))}
           {data.length === 0 && (
             <tr>
-              <td colSpan={7} className="p-6 text-center text-gray-500">
+              <td colSpan={8} className="p-6 text-center text-gray-500">
                 Sin resultados
               </td>
             </tr>

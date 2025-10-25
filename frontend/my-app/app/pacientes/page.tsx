@@ -34,8 +34,9 @@ export default function PacientesPage() {
         p.fullName.toLowerCase().includes(q.toLowerCase()) ||
         p.curp.toLowerCase().includes(q.toLowerCase()) ||
         p.bed.toLowerCase().includes(q.toLowerCase());
-      const byArea = area === "" || p.area === area;
-      const byEstado = estado === "" || p.status === estado;
+  // Treat both empty string and 'Todos' as no-filter
+  const byArea = area === "" || area === "Todos" || p.area === area;
+  const byEstado = estado === "" || estado === "Todos" || p.status === estado;
       return byText && byArea && byEstado;
     });
   }, [pacientes, q, area, estado]);
