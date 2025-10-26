@@ -18,6 +18,26 @@
       "bed": "u1",
       "sex": "F",
       "status": "Activo",
+      "nurse": "Luis García"
+    },
+    {
+      "id": "759b",
+      "fullName": "Enrique",
+      "curp": "JÑHJADHJDFSA",
+      "area": "Urgencias",
+      "bed": "U-1",
+      "sex": "F",
+      "status": "Observación",
+      "nurse": "Ana Sánchez"
+    },
+    {
+      "id": "c693",
+      "fullName": "Demian",
+      "curp": "dadfad",
+      "area": "Urgencias",
+      "bed": "",
+      "sex": "M",
+      "status": "Activo",
       "nurse": "—"
     }
   ]
