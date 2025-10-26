@@ -1,12 +1,59 @@
 "use client";
 
 import LayoutDashboard from "@/components/LayoutDashboard";
-import { FormEvent, useState } from "react"; // 'useEffect' ya no es necesario aquí
+import { FormEvent, useState } from "react";
 import PatientHeader from "./components/PatientHeader";
 import VitalSignsForm from "./components/VitalSignsForm";
 import EvolutionNotes from "./components/EvolutionNotes";
-import MedicationLog from "./components/MedicationLog";
-import TabButton from "./components/TabButton"; // Importamos el nuevo componente
+import MedicationAdministration from "./components/MedicationAdministration";
+import TabButton from "./components/TabButton";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+// Componente React
+const MySwal = withReactContent(Swal);
+
+// Funciones de validación
+const validateNumericRange = (
+  value: string,
+  min: number,
+  max: number,
+  fieldName: string
+): string | null => {
+  if (value.trim() === '') return `${fieldName} no puede estar vacío.`;
+  const num = parseFloat(value);
+  if (isNaN(num)) return `${fieldName} debe ser un número.`;
+  if (num < min || num > max) {
+    return `${fieldName} debe estar entre ${min} y ${max}.`;
+  }
+  return null;
+};
+
+const validateBloodPressure = (bp: string): string | null => {
+  if (bp.trim() === '') return 'Presión Arterial no puede estar vacía.';
+  
+  const regex = /^[1-9][0-9]{1,2}\/[1-9][0-9]{1,2}$/;
+  if (!regex.test(bp)) {
+    return 'Formato inválido. Use "sistólica/diastólica", ej: 120/80';
+  }
+  
+  // ¡Validación de Rango!
+  const parts = bp.split('/');
+  const sistolic = parseInt(parts[0], 10);
+  const diastolic = parseInt(parts[1], 10);
+
+  if (sistolic < 70 || sistolic > 250) {
+    return `Sistólica (${sistolic}) fuera de rango (70-250).`;
+  }
+  if (diastolic < 40 || diastolic > 140) {
+    return `Diastólica (${diastolic}) fuera de rango (40-140).`;
+  }
+  if (sistolic <= diastolic) {
+    return 'Sistólica debe ser mayor que la diastólica.';
+  }
+  
+  return null;
+};
 
 // --- Tipos de Datos (Sin cambios) ---
 export interface Patient {
@@ -62,61 +109,127 @@ const MOCK_NOTES: Note[] = [
 
 const CURRENT_NURSE_NAME = "Enfermera B. López";
 
-// Define los tipos para las pestañas
 type TabName = "signos" | "notas" | "medicamentos";
 
 export default function PatientClinicalRecordPage() {
-  // --- Estados (Sin cambios en la lógica de datos) ---
   const [originalVitals, setOriginalVitals] = useState<VitalSigns>(MOCK_VITALS);
   const [currentVitals, setCurrentVitals] = useState<VitalSigns>(MOCK_VITALS);
   const [newNoteText, setNewNoteText] = useState("");
   const [pastNotes, setPastNotes] = useState<Note[]>(MOCK_NOTES);
   const [errors, setErrors] = useState<{ vitalSigns?: any; note?: string }>({});
-
-  // --- NUEVO ESTADO PARA LAS PESTAÑAS ---
   const [activeTab, setActiveTab] = useState<TabName>("signos");
 
-  // --- Lógica de Guardado (Sin cambios) ---
+  // --- LÓGICA DE GUARDADO (MODIFICADA) ---
   const handleSave = (e: FormEvent) => {
     e.preventDefault();
     setErrors({});
     const newErrors: { vitalSigns?: any; note?: string } = { vitalSigns: {} };
 
-    // Validación
-    const isNumeric = (value: string) => value.trim() === "" || !isNaN(Number(value));
-    if (!isNumeric(currentVitals.heartRate)) {
-      newErrors.vitalSigns.heartRate = "Debe ser un valor numérico.";
+    let vitalsChanged = JSON.stringify(originalVitals) !== JSON.stringify(currentVitals);
+    let noteChanged = newNoteText.trim() !== "";
+    let changesToSave = false;
+
+    // --- 1. VALIDACIÓN CONDICIONAL POR PESTAÑA ---
+    if (activeTab === "signos") {
+      // --- VALIDACIÓN DE RANGOS MÍN/MÁX AL GUARDAR ---
+
+      // Validar Presión Arterial (Formato)
+      const bpError = validateBloodPressure(currentVitals.bloodPressure);
+      if (bpError) newErrors.vitalSigns.bloodPressure = bpError;
+
+      // Validar Frecuencia Cardíaca (Rango lógico)
+      const hrError = validateNumericRange(currentVitals.heartRate, 30, 220, "Frecuencia Cardíaca");
+      if (hrError) newErrors.vitalSigns.heartRate = hrError;
+
+      // Validar Temperatura (Rango lógico)
+      const tempError = validateNumericRange(currentVitals.temperature, 34.0, 42.0, "Temperatura");
+      if (tempError) newErrors.vitalSigns.temperature = tempError;
+
+      // Validar Saturación
+      const satError = validateNumericRange(currentVitals.oxygenSaturation, 80, 100, "Saturación O₂");
+      if (satError) newErrors.vitalSigns.saturation = satError; // Corregí el nombre de la key
+      
+      // --- NUEVAS VALIDACIONES ---
+      // Validar Glucosa
+      const glucError = validateNumericRange(currentVitals.glucose, 50, 600, "Glucosa");
+      if (glucError) newErrors.vitalSigns.glucose = glucError;
+
+      // Validar Evacuaciones
+      const evacError = validateNumericRange(currentVitals.evacuations, 0, 20, "Evacuaciones");
+      if (evacError) newErrors.vitalSigns.evacuations = evacError;
+
+      // Validar Orina
+      const urineError = validateNumericRange(currentVitals.urineMl, 0, 5000, "Orina (ml)");
+      if (urineError) newErrors.vitalSigns.urineMl = urineError;
+
+    } else if (activeTab === "notas") {
+      // Si estoy en la pestaña de Notas, valido notas
+      // (Nuestra validación original era si la nota estaba vacía Y no había otros cambios)
+      // (Pero ahora solo nos importa si la nota cambió)
+      if (noteChanged && newNoteText.trim() === "") {
+        newErrors.note = "La nota no puede estar vacía si se intenta añadir.";
+      }
+
+    } else if (activeTab === "medicamentos") {
+      // Si estoy en la pestaña Medicamentos, este botón no hace nada.
+      // El guardado es "instantáneo" con los botones de esa pestaña.
+      console.log("El botón 'Guardar Cambios' no aplica a la pestaña de Medicamentos.");
+      return;
     }
-    if (!isNumeric(currentVitals.glucose)) {
-      newErrors.vitalSigns.glucose = "Debe ser un valor numérico.";
-    }
-    if (!isNumeric(currentVitals.evacuations)) {
-      newErrors.vitalSigns.evacuations = "Debe ser un valor numérico.";
-    }
-    if (!isNumeric(currentVitals.urineMl)) {
-      newErrors.vitalSigns.urineMl = "Debe ser un valor numérico.";
-    }
-    const vitalsChanged = JSON.stringify(originalVitals) !== JSON.stringify(currentVitals);
-    if (newNoteText.trim() === "" && !vitalsChanged) {
-       newErrors.note = "El campo Nota de Evolución es obligatorio si no hay otros cambios.";
-    }
+
+    // --- 2. MOSTRAR ERRORES (SI LOS HAY EN LA PESTAÑA ACTIVA) ---
     if (Object.keys(newErrors.vitalSigns).length > 0 || newErrors.note) {
       setErrors(newErrors);
-      alert("Error: Revisa los campos marcados en rojo.");
+
+      // Construye una lista de errores para el modal
+      const errorMessages = [
+        ...Object.values(newErrors.vitalSigns),
+        ...(newErrors.note ? [newErrors.note] : [])
+      ];
+
+      MySwal.fire({
+        title: "Error de Validación",
+        html: `
+          <p class="mb-2">Por favor, revisa los siguientes errores:</p>
+          <ul class="text-left list-disc list-inside">
+            ${errorMessages.map(err => `<li>${err}</li>`).join('')}
+          </ul>
+        `,
+        icon: "error",
+        confirmButtonColor: "#3B82F6",
+      });
       return;
     }
 
-    // PA-03
-    const noChanges = !vitalsChanged && newNoteText.trim() === "";
-    if (noChanges) {
-      alert("No se detectaron cambios para guardar");
+    // --- 3. PA-03: Verificación de "Sin Cambios" (POR PESTAÑA) ---
+    if (activeTab === "signos" && !vitalsChanged) {
+      MySwal.fire({
+        title: "Sin Cambios",
+        text: "No se detectaron cambios para guardar en Signos Vitalales.",
+        icon: "info",
+        confirmButtonColor: "#3B82F6",
+      });
+      return;
+    }
+    if (activeTab === "notas" && !noteChanged) {
+      MySwal.fire({
+        title: "Sin Cambios",
+        text: "No se detectaron cambios para guardar en Notas.",
+        icon: "info",
+        confirmButtonColor: "#3B82F6",
+      });
       return;
     }
 
-    // PA-01
-    console.log("Guardando datos...");
-    setOriginalVitals(currentVitals);
-    if (newNoteText.trim() !== "") {
+    // --- 4. PA-01: Guardado Exitoso (POR PESTAÑA) ---
+    console.log(`Guardando datos de la pestaña: ${activeTab}`);
+
+    if (activeTab === "signos" && vitalsChanged) {
+      setOriginalVitals(currentVitals);
+      changesToSave = true;
+    }
+
+    if (activeTab === "notas" && noteChanged) {
       const newNote: Note = {
         id: crypto.randomUUID(),
         text: newNoteText.trim(),
@@ -124,26 +237,64 @@ export default function PatientClinicalRecordPage() {
         timestamp: new Date().toISOString(),
       };
       setPastNotes((prev) => [newNote, ...prev]);
-      setNewNoteText("");
+      setNewNoteText(""); // Limpia el textarea
+      changesToSave = true;
     }
-    alert("Registro actualizado con éxito");
+
+    if (changesToSave) {
+      MySwal.fire({
+        title: "¡Éxito!",
+        text: "Registro actualizado con éxito.",
+        icon: "success",
+        timer: 1500, // Se cierra solo después de 1.5s
+        showConfirmButton: false,
+      });
+    }
   };
 
   const handleCancel = () => {
+    // El cancelar sí debe ser global
     setCurrentVitals(originalVitals);
     setNewNoteText("");
     setErrors({});
   };
 
+  const handleUpdateNote = (id: string, newText: string) => {
+    // La validación de texto vacío se hace en el hijo (EvolutionNotes)
+    // pero la mantenemos aquí por si acaso.
+    if (newText.trim() === "") {
+      MySwal.fire({
+        title: "Error",
+        text: "La nota de evolución no puede estar vacía.",
+        icon: "error",
+        confirmButtonColor: "#3B82F6",
+      });
+      return; // No guardes
+    }
+
+    // Actualiza el estado
+    setPastNotes(prev =>
+      prev.map(note =>
+        note.id === id ? { ...note, text: newText.trim() } : note
+      )
+    );
+
+    // Muestra éxito
+    MySwal.fire({
+      title: "¡Nota Actualizada!",
+      text: "La nota se actualizó correctamente.",
+      icon: "success",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  };
+
   return (
     <LayoutDashboard>
-      {/* El encabezado del paciente se queda afuera */}
       <PatientHeader patient={MOCK_PATIENT} />
 
-      {/* El formulario principal sigue envolviendo todo para el guardado unificado */}
       <form onSubmit={handleSave} className="space-y-6 mt-6">
-        
-        {/* --- BARRA DE NAVEGACIÓN DE PESTAÑAS --- */}
+        {/* --- BARRA DE NAVEGACIÓN (Sin cambios) --- */}
         <div className="flex border-b border-gray-200">
           <TabButton
             label="Signos Vitales"
@@ -160,13 +311,10 @@ export default function PatientClinicalRecordPage() {
             isActive={activeTab === "medicamentos"}
             onClick={() => setActiveTab("medicamentos")}
           />
-          {/* La cama del paciente ahora la muestra PatientHeader */}
         </div>
 
-        {/* --- CONTENIDO DE LAS PESTAÑAS --- */}
+        {/* --- CONTENIDO DE LAS PESTAÑAS (Sin cambios) --- */}
         <div className="bg-white rounded-xl shadow p-6">
-          
-          {/* Pestaña 1: Signos Vitales */}
           {activeTab === "signos" && (
             <div>
               <h2 className="text-lg font-semibold text-gray-700 mb-4">
@@ -177,36 +325,28 @@ export default function PatientClinicalRecordPage() {
                 onChange={setCurrentVitals}
                 errors={errors.vitalSigns}
               />
-              {/* NOTA: La imagen muestra un "Histórico de Lecturas" aquí.
-                Nuestra lógica actual no guarda un historial de signos vitales,
-                solo de notas. Por ahora, esta pestaña solo contiene el formulario.
-              */}
             </div>
           )}
 
-          {/* Pestaña 2: Notas de Enfermería */}
           {activeTab === "notas" && (
             <EvolutionNotes
               pastNotes={pastNotes}
               newNote={newNoteText}
               onNewNoteChange={setNewNoteText}
+              onEditNote={handleUpdateNote}
               error={errors.note}
             />
-            // Este componente ya tiene la estructura "Formulario + Historial"
           )}
 
-          {/* Pestaña 3: Medicamentos */}
           {activeTab === "medicamentos" && (
-            <div>
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                Administración de Medicamentos
-              </h2>
-              <MedicationLog nurseName={CURRENT_NURSE_NAME} />
-            </div>
+            <MedicationAdministration
+              patientId={MOCK_PATIENT.id}
+              nurseName={CURRENT_NURSE_NAME}
+            />
           )}
         </div>
 
-        {/* Botones de Acción (se quedan al final, fuera de las pestañas) */}
+        {/* --- BOTONES DE ACCIÓN (Sin cambios en el HTML) --- */}
         <div className="flex justify-end gap-3 pt-4">
           <button
             type="button"
