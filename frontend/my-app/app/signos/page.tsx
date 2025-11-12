@@ -6,6 +6,7 @@ import PatientHeader from "./components/PatientHeader";
 import VitalSignsForm from "./components/VitalSignsForm";
 import EvolutionNotes from "./components/EvolutionNotes";
 import MedicationAdministration from "./components/MedicationAdministration";
+import SuppliesLog from "./components/SuppliesAdministration";
 import TabButton from "./components/TabButton";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -31,12 +32,12 @@ const validateNumericRange = (
 
 const validateBloodPressure = (bp: string): string | null => {
   if (bp.trim() === '') return 'Presión Arterial no puede estar vacía.';
-  
+
   const regex = /^[1-9][0-9]{1,2}\/[1-9][0-9]{1,2}$/;
   if (!regex.test(bp)) {
     return 'Formato inválido. Use "sistólica/diastólica", ej: 120/80';
   }
-  
+
   // ¡Validación de Rango!
   const parts = bp.split('/');
   const sistolic = parseInt(parts[0], 10);
@@ -51,7 +52,7 @@ const validateBloodPressure = (bp: string): string | null => {
   if (sistolic <= diastolic) {
     return 'Sistólica debe ser mayor que la diastólica.';
   }
-  
+
   return null;
 };
 
@@ -109,7 +110,8 @@ const MOCK_NOTES: Note[] = [
 
 const CURRENT_NURSE_NAME = "Enfermera B. López";
 
-type TabName = "signos" | "notas" | "medicamentos";
+// --- CAMBIO 1: Añadido "insumos" al tipo ---
+type TabName = "signos" | "notas" | "medicamentos" | "insumos";
 
 export default function PatientClinicalRecordPage() {
   const [originalVitals, setOriginalVitals] = useState<VitalSigns>(MOCK_VITALS);
@@ -148,7 +150,7 @@ export default function PatientClinicalRecordPage() {
       // Validar Saturación
       const satError = validateNumericRange(currentVitals.oxygenSaturation, 80, 100, "Saturación O₂");
       if (satError) newErrors.vitalSigns.saturation = satError; // Corregí el nombre de la key
-      
+
       // --- NUEVAS VALIDACIONES ---
       // Validar Glucosa
       const glucError = validateNumericRange(currentVitals.glucose, 50, 600, "Glucosa");
@@ -170,10 +172,11 @@ export default function PatientClinicalRecordPage() {
         newErrors.note = "La nota no puede estar vacía si se intenta añadir.";
       }
 
-    } else if (activeTab === "medicamentos") {
-      // Si estoy en la pestaña Medicamentos, este botón no hace nada.
-      // El guardado es "instantáneo" con los botones de esa pestaña.
-      console.log("El botón 'Guardar Cambios' no aplica a la pestaña de Medicamentos.");
+      // --- CAMBIO 4: Agregado "insumos" a la lógica de no-guardado ---
+    } else if (activeTab === "medicamentos" || activeTab === "insumos") {
+      // Si estoy en Medicamentos o Insumos, este botón no hace nada.
+      // El guardado es "instantáneo" con los botones de esas pestañas.
+      console.log(`El botón 'Guardar Cambios' no aplica a la pestaña de ${activeTab}.`);
       return;
     }
 
@@ -294,7 +297,7 @@ export default function PatientClinicalRecordPage() {
       <PatientHeader patient={MOCK_PATIENT} />
 
       <form onSubmit={handleSave} className="space-y-6 mt-6">
-        {/* --- BARRA DE NAVEGACIÓN (Sin cambios) --- */}
+        {/* --- BARRA DE NAVEGACIÓN (MODIFICADA) --- */}
         <div className="flex border-b border-gray-200">
           <TabButton
             label="Signos Vitales"
@@ -311,9 +314,15 @@ export default function PatientClinicalRecordPage() {
             isActive={activeTab === "medicamentos"}
             onClick={() => setActiveTab("medicamentos")}
           />
+          {/* --- CAMBIO 2: Añadido el nuevo TabButton --- */}
+          <TabButton
+            label="Insumos"
+            isActive={activeTab === "insumos"}
+            onClick={() => setActiveTab("insumos")}
+          />
         </div>
 
-        {/* --- CONTENIDO DE LAS PESTAÑAS (Sin cambios) --- */}
+        {/* --- CONTENIDO DE LAS PESTAÑAS (MODIFICADO) --- */}
         <div className="bg-white rounded-xl shadow p-6">
           {activeTab === "signos" && (
             <div>
@@ -343,6 +352,18 @@ export default function PatientClinicalRecordPage() {
               patientId={MOCK_PATIENT.id}
               nurseName={CURRENT_NURSE_NAME}
             />
+          )}
+
+          {/* --- CAMBIO 3: Añadido el bloque de contenido para "insumos" --- */}
+          {activeTab === "insumos" && (
+            <div>
+              {activeTab === "insumos" && (
+                <SuppliesLog
+                  patientId={MOCK_PATIENT.id}
+                  nurseName={CURRENT_NURSE_NAME}
+                />
+              )}
+            </div>
           )}
         </div>
 
