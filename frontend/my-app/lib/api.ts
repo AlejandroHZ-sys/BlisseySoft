@@ -48,3 +48,36 @@ export async function getEnfermeros() {
   if (!r.ok) throw new Error("Error al obtener enfermeros");
   return r.json();
 }
+
+// ---------- CAMAS ----------
+export async function getCamas() {
+  const r = await fetch(`${getApi()}/camas`);
+  if (!r.ok) throw new Error("Error al obtener camas");
+  return r.json();
+}
+
+export async function createCama(payload: any) {
+  const r = await fetch(`${getApi()}/camas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error("Error al crear cama");
+  return r.json();
+}
+
+export async function updateCama(id: string | number, payload: any) {
+  const r = await fetch(`${getApi()}/camas/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!r.ok) throw new Error("Error al actualizar cama");
+  return r.json();
+}
+
+export async function deleteCama(id: string | number) {
+  const r = await fetch(`${getApi()}/camas/${id}`, { method: "DELETE" });
+  if (!r.ok) throw new Error("Error al borrar cama");
+  return true;
+}

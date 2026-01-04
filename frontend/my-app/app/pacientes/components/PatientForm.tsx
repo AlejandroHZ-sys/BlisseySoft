@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Patient, PatientStatus } from "./PatientTable";
+import { useCamasStore, type Cama } from "@/lib/camasStore";
 
 const AREAS = ["Urgencias", "UCI", "Cirugía", "Pediatría", "Hospitalización"];
 const TRIAGE = ["Rojo", "Naranja", "Amarillo", "Verde", "Azul"];
@@ -27,6 +28,11 @@ export default function PatientForm({
   onCancel: () => void;
 }) {
   const [form, setForm] = useState<FormModel | null>(null);
+  const { camas, fetchCamas } = useCamasStore();
+
+  useEffect(() => {
+    fetchCamas();
+  }, [fetchCamas]);
 
   useEffect(() => {
     if (value) {
@@ -56,6 +62,11 @@ export default function PatientForm({
 
   const set = <K extends keyof FormModel>(k: K, v: FormModel[K]) =>
     setForm((prev) => (prev ? { ...prev, [k]: v } : prev));
+
+  // Filtrar camas disponibles según el área seleccionada
+  const camasDisponibles = camas.filter(
+    (cama: Cama) => cama.estado === "Disponible" && cama.area === form?.area
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,12 +162,24 @@ export default function PatientForm({
             <option key={a}>{a}</option>
           ))}
         </select>
-        <input
+        <select
           className="border rounded-lg p-2"
-          placeholder="Cama / Cuarto (p. ej. U-03)"
           value={form.bed}
           onChange={(e) => set("bed", e.target.value)}
-        />
+          disabled={!form.area}
+        >
+          <option value="">
+            {!form.area ? "Primero selecciona un área" : "Seleccionar cama"}
+          </option>
+          {camasDisponibles.map((cama: Cama) => (
+            <option
+              key={cama.id}
+              value={`${cama.habitacion}-${cama.identificador}`}
+            >
+              {cama.habitacion} - {cama.identificador}
+            </option>
+          ))}
+        </select>
         <select
           className="border rounded-lg p-2 col-span-2"
           value={form.nurse}
