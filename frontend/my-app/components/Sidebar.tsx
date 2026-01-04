@@ -10,6 +10,7 @@ import {
   BarChart3,
   GraduationCap,
   Stethoscope,
+  Bed,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -20,7 +21,8 @@ export default function Sidebar() {
     { name: "Personal de Enfermería", path: "/personal", icon: Users },
     { name: "Gestión de Turnos", path: "/turnos", icon: CalendarDays },
     { name: "Asignación de Turnos", path: "/asignaciones", icon: ClipboardList },
-  { name: "Gestión de Pacientes", path: "/pacientes", icon: Stethoscope },
+    { name: "Gestión de Pacientes", path: "/pacientes", icon: Stethoscope },
+    { name: "Gestión de Camas", path: "/camas", icon: Bed },
     { name: "Reportes", path: "/reportes", icon: BarChart3 },
     { name: "Capacitación", path: "/capacitacion", icon: GraduationCap },
   ];
