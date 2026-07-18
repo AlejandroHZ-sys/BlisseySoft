@@ -39,63 +39,80 @@
       "sex": "M",
       "status": "Activo",
       "nurse": "—"
+    },
+    {
+      "id": "a6d3",
+      "fullName": "Alejadnro",
+      "curp": "adfd",
+      "area": "Urgencias",
+      "bed": "",
+      "sex": "M",
+      "status": "Activo",
+      "nurse": "—"
     }
   ],
   "camas": [
     {
-      "id": 1,
+      "id": "1",
       "identificador": "C-01",
       "habitacion": "H-101",
       "area": "Urgencias",
       "estado": "Disponible"
     },
     {
-      "id": 2,
+      "id": "2",
       "identificador": "C-02",
       "habitacion": "H-101",
       "area": "Urgencias",
       "estado": "Ocupada"
     },
     {
-      "id": 3,
+      "id": "3",
       "identificador": "C-01",
       "habitacion": "H-201",
       "area": "UCI",
       "estado": "Disponible"
     },
     {
-      "id": 4,
+      "id": "4",
       "identificador": "C-02",
       "habitacion": "H-201",
       "area": "UCI",
       "estado": "En Mantenimiento"
     },
     {
-      "id": 5,
+      "id": "5",
       "identificador": "C-01",
       "habitacion": "H-301",
       "area": "Cirugía",
       "estado": "Disponible"
     },
     {
-      "id": 6,
+      "id": "6",
       "identificador": "C-02",
       "habitacion": "H-301",
       "area": "Cirugía",
       "estado": "Disponible"
     },
     {
-      "id": 7,
+      "id": "7",
       "identificador": "C-01",
       "habitacion": "H-401",
       "area": "Pediatría",
       "estado": "Disponible"
     },
     {
-      "id": 8,
+      "id": "8",
       "identificador": "C-01",
       "habitacion": "H-501",
       "area": "Hospitalización",
+      "estado": "Disponible"
+    },
+    {
+      "id": 0,
+      "identificador": "C-04",
+      "habitacion": "H-103",
+      "area": "Pediatría",
       "estado": "Disponible"
     }
   ]
